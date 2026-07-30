@@ -9,7 +9,7 @@
 ![Node.js](https://img.shields.io/badge/Node.js-18%2B-green)
 ![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-yellow)
 ![Status](https://img.shields.io/badge/Status-Active-success)
-![Version](https://img.shields.io/badge/Version-1.0.0-blue)
+![Version](https://img.shields.io/badge/Version-1.0.5-blue)
 ![Platform](https://img.shields.io/badge/Platform-WhatsApp-blue)
 ![Type](https://img.shields.io/badge/Type-Bot%20Base-purple)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
