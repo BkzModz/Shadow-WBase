@@ -17,9 +17,10 @@ export const createMsgHandler = (state, store) => (sock) => async ({ messages, t
     store.addMessage(from, message);
 
     const cmd = parseCommand(body, prefix);
-    if (!cmd) continue;
 
-    sock.readMessages([message.key]);
+    if (cmd?.command) {
+      await sock.readMessages([message.key]);
+    }
 
     await state.handler({ store, sock, m: msg, from, body, prefix, cmd });
   }

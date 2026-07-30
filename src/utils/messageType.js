@@ -9,19 +9,26 @@ const MEDIA_TYPES = [
     "document",
 ];
 
-export function isType(message, type) {
-    const content = unwrapMessageContent(message?.message);
-    const quoted = unwrapMessageContent(getQuotedMessage(message)?.raw);
+function getMessageContents(message) {
+    return [
+        unwrapMessageContent(message?.message),
+        unwrapMessageContent(getQuotedMessage(message)?.raw),
+    ];
+}
 
-    return Boolean(
-        content?.[`${type}Message`] ||
-        quoted?.[`${type}Message`]
+export function isType(message, type) {
+    return getMessageContents(message).some(content =>
+        Boolean(content?.[`${type}Message`])
     );
 }
 
-export const isMedia = message =>
-    MEDIA_TYPES.some(type => isType(message, type));
+export function messageType(message) {
+    const content = getMessageContents(message).find(Boolean);
 
+    return content ? Object.keys(content)[0] : null;
+}
+
+export const isMedia = message => MEDIA_TYPES.some(type => isType(message, type));
 export const isImage = message => isType(message, "image");
 export const isVideo = message => isType(message, "video");
 export const isAudio = message => isType(message, "audio");

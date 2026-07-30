@@ -18,34 +18,27 @@ export async function resolveMessage(m, store) {
         sender: m.key.participant || m.key.remoteJid,
     })?.protocolMessage?.editedMessage;
 
-    const contextInfo = {
-        ...editMsg?.message?.extendedTextMessage?.contextInfo,
-        ...editMsg?.message?.contextInfo,
-        ...m.message?.extendedTextMessage?.contextInfo,
-        ...m.message?.contextInfo,
-    };
-
-    const messageContextInfo = {
-        ...m.message?.messageContextInfo,
-        ...editMsg?.message?.messageContextInfo,
-    };
-
     const msg = edited ?
         {
             key: m.key,
             messageTimestamp: m.messageTimestamp,
             pushName: m.pushName,
             broadcast: m.broadcast,
-            category: m.category,
+            category: "EditMessage",
             message: {
                 oldMsg: {
                     text: pickText(editMsg)
                 },
                 ...edited,
-                contextInfo,
-                messageContextInfo,
+                contextInfo: {
+                    expiration: true,
+                },
+                messageContextInfo: {
+                    ...m.message?.messageContextInfo,
+                    ...editMsg?.message?.messageContextInfo,
+                },
             }
         } : { ...editMsg, key: m.key, messageTimestamp: m.messageTimestamp };
-
+    console.log(msg)
     return { msg, body: pickText(msg) };
 }

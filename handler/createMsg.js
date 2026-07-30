@@ -123,16 +123,30 @@ export const createMsg = (sock, from, m, ephemeralExpiration) => {
         sendMention: (text, mentions = [], options = {}) =>
             send(sock, from, { text: trimText(text), mentions }, options, m, ephemeralExpiration),
 
-        sendButtons: (text, buttons = [], headerType = 1, options = {}) =>
-            send(sock, from, { text: trimText(text), buttons, headerType }, options, m, ephemeralExpiration),
-
-        sendList: ({ text, footer, title, buttonText, sections }, options = {}) =>
-            send(sock, from, { text: trimText(text), footer, title, buttonText, sections }, options, m, ephemeralExpiration),
+        sendInteractive: ({ header, title, footer, buttons = [], image, nativeFlowMessage, options = {} }) =>
+            send(sock, from, {
+                interactiveMessage: {
+                    contextInfo: {
+                        expiration: ephemeralExpiration
+                    },
+                    ...(header && { header }),
+                    ...(title && { title }),
+                    ...(footer && { footer }),
+                    ...(image && { image }),
+                    ...(nativeFlowMessage && {
+                        nativeFlowMessage: {
+                            ...nativeFlowMessage,
+                            buttons: nativeFlowMessage.buttons ?? buttons,
+                        },
+                    }),
+                    ...(!nativeFlowMessage && buttons.length > 0 && { buttons }),
+                }
+            }, options, m, ephemeralExpiration),
 
         sendViewOnceImage: (image, caption = "", options = {}) =>
             send(sock, from, { image: normalizeMedia(image), caption: trimText(caption), viewOnce: true }, options, m, ephemeralExpiration),
 
         sendCodeBlockV2: (code, options = {}) =>
-            sock.sendCodeBlockV2(from, code, m, options)
+            sock.sendCodeBlockV2(from, code, m, options, ephemeralExpiration)
     };
 };

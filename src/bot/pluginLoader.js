@@ -1,6 +1,7 @@
 import fs from "fs/promises";
 import path from "path";
 import { pathToFileURL } from "url";
+import { logPlugins } from "../utils/logger.js"
 
 const PluginsPath = path.resolve("./plugins");
 const isValid = (p) => p?.name;
@@ -50,6 +51,5 @@ export async function loadPlugins(plugins, aliases) {
     }
 
     await walk(PluginsPath);
-
-    console.log(`[Plugins Carregados]: ${plugins.size}`);
+    logPlugins(plugins);
 }

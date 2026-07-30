@@ -1,6 +1,6 @@
 {
   "name": "shadow",
-  "version": "1.0.0",
+  "version": "1.0.5",
   "description": "Bot Base de WhatsApp modular com sistema de plugins",
   "type": "module",
   "main": "index.js",
@@ -19,13 +19,14 @@
     "@hapi/boom": "^10.0.1",
     "axios": "^1.7.0",
     "chokidar": "^5.0.0",
+    "fluent-ffmpeg": "^2.1.3",
     "form-data": "^4.0.0",
     "fs-extra": "^11.1.1",
     "jimp": "^1.6.1",
     "link-preview-js": "^3.2.0",
     "moment": "^2.29.4",
     "node-fetch": "^3.3.2",
-    "ourin-baileys": "^0.7.14",
+    "ourin-baileys": "latest",
     "pino": "^10.3.1",
     "qrcode-terminal": "^0.12.0"
   },

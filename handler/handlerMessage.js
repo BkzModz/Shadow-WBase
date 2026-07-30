@@ -7,67 +7,58 @@ import { getQuotedMessage } from "../src/utils/getQuotedMessage.js";
 import { resolvePlugin } from "./resolvePlugin.js";
 import { createMsg } from "./createMsg.js";
 import { createContext } from "./createContext.js";
+import { logMessage, logCommand, logError } from "../src/utils/logger.js";
 
-export const handlerMessage = (plugins) => async ({ store, sock, m, from, body, prefix, cmd }) => {
-  if (!body || !cmd) return;
+export const handlerMessage = (plugins) =>
+  async ({ store, sock, m, from, body, prefix, cmd }) => {
+    const sender = getSenderJid(m);
+    const expiration = getEphemeralExpiration(m);
+    const conn = createMsg(sock, from, m, expiration);
+    const ctx = await createContext(sock, m, from, sender, getQuotedMessage(m), prefix, cmd);
 
-  const sender = getSenderJid(m);
-  const expiration = getEphemeralExpiration(m);
-  const conn = createMsg(sock, from, m, expiration);
-  const plugin = resolvePlugin(plugins, cmd.command);
+    if (!body || !cmd) {
+      logMessage(ctx, body);
+      return;
+    }
 
-  if (!plugin || typeof plugin.run !== "function") {
-    const suggestions = findSuggestions(cmd.command, plugins)
-      .filter((s) => s.percent >= 60 || s.name.includes(cmd.command[0]))
-      .sort((a, b) => b.percent - a.percent)
-      .slice(0, 5);
+    const plugin = resolvePlugin(plugins, cmd.command);
 
-    const text = suggestions.length
-      ? [
+    logCommand(plugin ?? { name: cmd.command }, ctx);
+
+    if (!plugin?.run) {
+      const suggestions = findSuggestions(cmd.command, plugins).filter((s) =>
+        s.percent >= 60 || s.name.startsWith(cmd.command[0])).sort((a, b) => b.percent - a.percent).slice(0, 5);
+      const text = suggestions.length > 0 ? [
         "> Comando não encontrado!",
         "",
         "🔎 Comandos semelhantes:",
         "",
-        suggestions
-          .map((s) =>
-            [
-              `*• Comando:* ${prefix + s.name}`,
-              `  *— Similaridade:* ${s.percent}%`,
-              `  *— Descrição:* _${s.description || "Sem descrição"}_`,
-              `  *— Funcionando?:* ${s.disabled === true || s.disabled === "true" ? "Não" : "Sim"
-              }`,
-              `  *— Restrição:* ${s.owner ? "Dono" : s.admin ? "Admin" : s.group ? "Grupo" : s.private ? "Privado" : "Nenhuma"
-              }`,
-              ...(s.usage ? [`  *— Uso:* ${prefix + s.name} _*${s.usage}*_`] : []),
-            ].join("\n")
-          )
-          .join("\n\n──\n\n"),
+        suggestions.map((s) =>
+          [`*• Comando:* ${prefix + s.name}`,
+          `  *— Similaridade:* ${s.percent}%`,
+          `  *— Descrição:* _${s.description || "Sem descrição"}_`,
+          `  *— Funcionando?:* ${s.disabled === true || s.disabled === "true" ? "Não" : "Sim"}`,
+          `  *— Restrição:* ${s.owner ? "Dono" : s.admin ? "Admin" : s.group ? "Grupo" : s.private ? "Privado" : "Nenhuma"}`,
+          ...(s.usage ? [`  *— Uso:* ${prefix + s.name} _*${s.usage}*_`] : []),
+          ].join("\n")).join("\n\n──\n\n")].join("\n") : "Comando não encontrado.";
 
-        "",
-      ]
-        .join("\n")
-        .trim()
-      : "Comando não encontrado!";
+      return conn.sendReply(text);
+    }
 
-    return conn.sendReply(text);
-  }
+    const cooldown = checkCooldown(sender, plugin.name, plugin.cooldown ?? config.cooldownDefault);
 
-  const cooldown = checkCooldown(sender, plugin.name, plugin.cooldown || config.cooldownDefault);
+    if (cooldown > 0) {
+      return conn.sendReply(`Aguarde ${Math.ceil(cooldown / 1000)} segundo(s) para usar este comando novamente.`);
+    }
 
-  if (cooldown > 0) {
-    return conn.sendReply(`Aguarde ${Math.ceil(cooldown / 1000)} segundo(s) para usar este comando novamente.`);
-  }
-
-  try {
-    const ctx = await createContext(sock, m, from, sender, getQuotedMessage(m), prefix, cmd);
     const validations = [
-      [plugin.owner && !ctx.isOwner, "Esse comando é apenas para o dono do bot."],
+      [plugin.disabled, "Esse comando está desativado no momento."],
+      [plugin.owner && !ctx.isOwner, "Esse comando é exclusivo do dono do bot."],
       [plugin.group && !ctx.isGroup, "Esse comando só pode ser usado em grupos."],
       [plugin.private && ctx.isGroup, "Esse comando só pode ser usado no privado."],
-      [plugin.admin && !ctx.isAdmin, "Você precisa ser administrador."],
+      [plugin.admin && !ctx.isAdmin, "Você precisa ser administrador do grupo."],
       [plugin.botAdmin && !ctx.isBotAdmin, "O bot precisa ser administrador."],
-      [plugin.isQuery && !ctx.query, `Você precisa informar um argumento.\n\n- Uso: ${prefix + plugin.name} ${plugin.usage}`],
-      [plugin.disabled, "Esse comando está desativado no momento."],
+      [plugin.isQuery && !ctx.query, `Você precisa informar um argumento.\n\nUso:\n${prefix}${plugin.name} ${plugin.usage}`],
     ];
 
     for (const [invalid, message] of validations) {
@@ -76,10 +67,9 @@ export const handlerMessage = (plugins) => async ({ store, sock, m, from, body, 
       }
     }
 
-    await plugin.run({ config, plugins, store, sock, m, conn, ctx });
-
-  } catch (e) {
-    console.error(`[ERRO] ${plugin.name}`, e?.stack || e);
-    await conn.sendReply("Ocorreu um erro ao executar este comando.");
-  }
-};
+    try {
+      await plugin.run({ config, plugins, store, sock, m, conn, ctx });
+    } catch (e) {
+      logError(e, `PLUGIN: ${plugin.name}`);
+    }
+  };

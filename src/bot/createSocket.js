@@ -7,7 +7,7 @@ export async function createSocket() {
   const sessionPath = path.resolve(config.bot.sessionPath);
   const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
   const logger = pino({
-    level: config.runtime.logLevel || "silent",
+    level: config.runtime.whatsappLogLevel,
     base: null
   });
 

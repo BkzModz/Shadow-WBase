@@ -1,5 +1,8 @@
-export const trimText = (v = "", max = 3500) =>
-  (v = String(v || "")).length > max ? v.slice(0, max - 1) + "…" : v;
+export const trimText = (v = "", max = 3500) => {
+  const text = String(v ?? "");
+
+  return text.length > max ? text.slice(0, max - 1) + "…" : text;
+};
 
 export const pickText = (m = {}) => {
   const msg = m.message || {};
@@ -44,11 +47,5 @@ export const parseCommand = (body = "", prefix = ".") => {
 };
 
 export const getPushName = (m = {}) => {
-  return (
-    m.pushName ||
-    m?.pushName ||
-    m?.message?.pushName ||
-    m?.key?.pushName ||
-    null
-  );
+  return (m.pushName || m?.pushName || m?.message?.pushName || m?.key?.pushName || null);
 };
