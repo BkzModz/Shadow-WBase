@@ -10,19 +10,25 @@ export const config = Object.freeze({
     ownerProfile: path.join(IMAGE_DIR, "profile-owner.png"),
   },
   bot: {
-    name: "Shadow",
-    prefix: ".",
-    number: "558499999999",
-    lid: "9999999999999999@lid",
+    name: "WABase",
+    prefix: "/",
+    number: "559999999999",
+    lid: "0@lid",
     sessionPath: "./session",
   },
-  owner: {
-    name: "Bkz Modz Ϟ",
-    number: "558499999999",
-    lid: "9999999999999999@lid"
-  },
+  owner: [
+    {
+      name: "Bkz Modz Ϟ",
+      number: "559999999999",
+      lid: "0@lid",
+    },
+    {
+      name: "Douglas Bk",
+      number: "559999999999",
+      lid: "0@lid",
+    }
+  ],
   runtime: {
-    temp: path.join(process.cwd(), "temp"),
     logLevel: "info",
     whatsappLogLevel: "silent"
   }
